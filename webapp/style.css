@@ -54,6 +54,73 @@ body {
   min-height: 100vh;
 }
 
+.app-hidden { display: none; }
+
+.gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.gate-box {
+  width: 100%;
+  max-width: 320px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.gate-label {
+  margin: 0 0 4px;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.gate-box input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1.05rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel-alt);
+  color: var(--text);
+  outline: none;
+  text-align: center;
+  letter-spacing: 0.15em;
+}
+
+.gate-box input:focus { border-color: var(--accent); }
+
+.gate-box button {
+  padding: 10px 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.gate-box button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.gate-error {
+  margin: 0;
+  min-height: 1.2em;
+  color: #e05a5a;
+  font-size: 0.85rem;
+}
+
 header {
   padding: 28px 20px 16px;
   text-align: center;

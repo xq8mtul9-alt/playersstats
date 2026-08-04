@@ -9,7 +9,45 @@ const resultEl = document.getElementById("result");
 let activeIndex = -1;
 let currentMatches = [];
 
-init();
+// パスワードはこのハッシュ値との一致で判定する（平文はページに残さない）
+const GATE_PASSWORD_HASH = "f411e93e0a68d1c82d34b44345273a3c2b96817643698123e12fe19fab97d4d7";
+const GATE_STORAGE_KEY = "npbStatsUnlocked";
+
+const gateEl = document.getElementById("gate");
+const gateFormEl = document.getElementById("gate-form");
+const gateInputEl = document.getElementById("gate-input");
+const gateErrorEl = document.getElementById("gate-error");
+const appEl = document.getElementById("app");
+
+async function sha256Hex(text) {
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+function unlockApp() {
+  gateEl.remove();
+  appEl.classList.remove("app-hidden");
+  init();
+}
+
+if (localStorage.getItem(GATE_STORAGE_KEY) === "1") {
+  unlockApp();
+} else {
+  gateInputEl.focus();
+  gateFormEl.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const hash = await sha256Hex(gateInputEl.value);
+    if (hash === GATE_PASSWORD_HASH) {
+      localStorage.setItem(GATE_STORAGE_KEY, "1");
+      unlockApp();
+    } else {
+      gateErrorEl.textContent = "パスワードが違います";
+      gateInputEl.value = "";
+      gateInputEl.focus();
+    }
+  });
+}
 
 async function init() {
   statusEl.textContent = "データを読み込み中...";

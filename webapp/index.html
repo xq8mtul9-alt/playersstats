@@ -7,6 +7,16 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div id="gate" class="gate">
+  <form id="gate-form" class="gate-box">
+    <p class="gate-label">パスワードを入力してください</p>
+    <input type="password" id="gate-input" inputmode="numeric" autocomplete="off" autofocus>
+    <button type="submit">開く</button>
+    <p id="gate-error" class="gate-error"></p>
+  </form>
+</div>
+
+<div id="app" class="app-hidden">
 <header>
   <h1>NPB選手成績検索</h1>
   <p class="sub">1軍（公式戦）・2軍（ファーム）成績を年度別に表示します</p>
@@ -27,6 +37,7 @@
   <p>データ出典：<a href="https://npb.jp/bis/" target="_blank" rel="noopener">NPB.jp 日本野球機構 成績・記録</a>（個人利用目的でスクレイピングしたローカルデータです）</p>
   <p class="updated-at" id="updated-at"><!--BUILD_TIMESTAMP--></p>
 </footer>
+</div>
 
 <script src="app.js"></script>
 </body>
