@@ -151,29 +151,27 @@ function renderPlayer(name) {
 function renderTable(records) {
   const statCols = Object.keys(records[0].stats);
 
-  const head = `
-    <tr>
-      <th>年度</th>
-      <th>区分</th>
-      <th>球団</th>
-      ${statCols.map(c => `<th>${escapeHtml(c)}</th>`).join("")}
-    </tr>
-  `;
-
-  const body = records.map(r => {
+  const rows = records.map(r => {
     const badge = r.level === 1
       ? `<span class="level-badge">1軍</span>`
       : `<span class="level-badge">2軍</span>`;
-    const cells = statCols.map(c => `<td>${escapeHtml(r.stats[c] ?? "")}</td>`).join("");
+    const stats = statCols.map(c => `
+      <div class="stat">
+        <span class="stat-label">${escapeHtml(c)}</span>
+        <span class="stat-value">${escapeHtml(r.stats[c] ?? "")}</span>
+      </div>
+    `).join("");
     return `
-      <tr class="level-${r.level}">
-        <td>${r.year}</td>
-        <td>${badge}</td>
-        <td>${escapeHtml(r.team)}</td>
-        ${cells}
-      </tr>
+      <div class="stat-row level-${r.level}">
+        <div class="stat-row-head">
+          <span class="stat-year">${r.year}</span>
+          ${badge}
+          <span class="stat-team">${escapeHtml(r.team)}</span>
+        </div>
+        <div class="stat-grid">${stats}</div>
+      </div>
     `;
   }).join("");
 
-  return `<div class="table-wrap"><table><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+  return `<div class="stat-rows">${rows}</div>`;
 }
