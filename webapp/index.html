@@ -23,8 +23,32 @@
 </header>
 
 <main>
+  <div class="filter-bar">
+    <label class="filter-field">
+      <span class="filter-label">年度</span>
+      <select id="filter-year"></select>
+    </label>
+    <label class="filter-field">
+      <span class="filter-label">チーム</span>
+      <select id="filter-team"></select>
+    </label>
+    <label class="filter-field">
+      <span class="filter-label">投手/野手</span>
+      <select id="filter-kind">
+        <option value="b">野手</option>
+        <option value="p">投手</option>
+      </select>
+    </label>
+    <label class="filter-field filter-field-player">
+      <span class="filter-label">選手</span>
+      <select id="filter-player">
+        <option value="">（全選手を表示）</option>
+      </select>
+    </label>
+  </div>
+
   <div class="search-box">
-    <input type="text" id="search-input" placeholder="選手名を入力（例：小園海斗、床田寛樹）" autocomplete="off">
+    <input type="text" id="search-input" placeholder="または選手名で直接検索（例：小園海斗、床田寛樹）" autocomplete="off">
     <div id="suggestions" class="suggestions"></div>
   </div>
 

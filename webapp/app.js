@@ -1,10 +1,25 @@
 let PLAYERS = null;
 let NAMES = [];
+let ALL_RECORDS = []; // {name, year, level, kind, team, stats} を選手横断でフラット化したもの
+
+const TEAM_ORDER = [
+  "読売ジャイアンツ", "阪神タイガース", "広島東洋カープ", "中日ドラゴンズ",
+  "横浜DeNAベイスターズ", "東京ヤクルトスワローズ",
+  "福岡ソフトバンクホークス", "北海道日本ハムファイターズ", "埼玉西武ライオンズ",
+  "オリックス・バファローズ", "千葉ロッテマリーンズ", "東北楽天ゴールデンイーグルス",
+];
+const DEFAULT_TEAM = "広島東洋カープ";
+const DEFAULT_KIND = "b";
 
 const searchInput = document.getElementById("search-input");
 const suggestionsEl = document.getElementById("suggestions");
 const statusEl = document.getElementById("status");
 const resultEl = document.getElementById("result");
+
+const yearSelect = document.getElementById("filter-year");
+const teamSelect = document.getElementById("filter-team");
+const kindSelect = document.getElementById("filter-kind");
+const playerSelect = document.getElementById("filter-player");
 
 let activeIndex = -1;
 let currentMatches = [];
@@ -61,11 +76,106 @@ async function init() {
       PLAYERS = await res.json();
     }
     NAMES = Object.keys(PLAYERS);
-    statusEl.textContent = `${NAMES.length}名の選手データを読み込みました。選手名を入力してください。`;
+    for (const name of NAMES) {
+      for (const r of PLAYERS[name]) {
+        ALL_RECORDS.push({ name, ...r });
+      }
+    }
+    statusEl.textContent = `${NAMES.length}名の選手データを読み込みました。フィルターまたは選手名で絞り込めます。`;
+    setupFilters();
   } catch (e) {
     statusEl.textContent = "データの読み込みに失敗しました（data/players.json が見つかりません）。scraper/build_players.py を実行してから、webapp フォルダをローカルサーバーで開いてください。";
     console.error(e);
   }
+}
+
+function setupFilters() {
+  const years = [...new Set(ALL_RECORDS.map(r => r.year))].sort((a, b) => b - a);
+  yearSelect.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join("");
+
+  const teamsPresent = new Set(ALL_RECORDS.map(r => r.team));
+  const teams = TEAM_ORDER.filter(t => teamsPresent.has(t));
+  teamSelect.innerHTML = teams.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+
+  yearSelect.value = String(years[0]);
+  teamSelect.value = teams.includes(DEFAULT_TEAM) ? DEFAULT_TEAM : teams[0];
+  kindSelect.value = DEFAULT_KIND;
+
+  yearSelect.addEventListener("change", onFilterChange);
+  teamSelect.addEventListener("change", onFilterChange);
+  kindSelect.addEventListener("change", onFilterChange);
+  playerSelect.addEventListener("change", () => {
+    if (playerSelect.value) {
+      searchInput.value = "";
+      renderPlayer(playerSelect.value);
+    } else {
+      renderRoster();
+    }
+  });
+
+  refreshPlayerOptions();
+  renderRoster();
+}
+
+function onFilterChange() {
+  refreshPlayerOptions();
+  renderRoster();
+}
+
+function refreshPlayerOptions() {
+  const names = rosterNames();
+  playerSelect.innerHTML = `<option value="">（全選手を表示）</option>` +
+    names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join("");
+}
+
+function currentFilter() {
+  return { year: Number(yearSelect.value), team: teamSelect.value, kind: kindSelect.value };
+}
+
+function rosterRecords() {
+  const { year, team, kind } = currentFilter();
+  return ALL_RECORDS.filter(r => r.year === year && r.team === team && r.kind === kind);
+}
+
+function rosterNames() {
+  return [...new Set(rosterRecords().map(r => r.name))].sort((a, b) => a.localeCompare(b, "ja"));
+}
+
+function renderRoster() {
+  const { year, team, kind } = currentFilter();
+  const records = rosterRecords();
+
+  if (!records.length) {
+    resultEl.innerHTML = `<div class="empty-hint">該当する成績データがありません</div>`;
+    return;
+  }
+
+  const byName = new Map();
+  for (const r of records) {
+    if (!byName.has(r.name)) byName.set(r.name, []);
+    byName.get(r.name).push(r);
+  }
+  const names = [...byName.keys()].sort((a, b) => a.localeCompare(b, "ja"));
+
+  const kindLabel = kind === "p" ? "投手" : "野手";
+  let html = `
+    <div class="player-header">
+      <h2>${year}年 ${escapeHtml(team)}</h2>
+      <span class="teams">${kindLabel}成績（${names.length}名）</span>
+    </div>
+    <div class="roster">
+  `;
+  for (const name of names) {
+    html += `
+      <div class="roster-player">
+        <h3 class="roster-player-name">${escapeHtml(name)}</h3>
+        ${renderTable(byName.get(name))}
+      </div>
+    `;
+  }
+  html += `</div>`;
+
+  resultEl.innerHTML = html;
 }
 
 function normalize(s) {
@@ -144,6 +254,7 @@ function closeSuggestions() {
 function selectPlayer(name) {
   searchInput.value = name;
   closeSuggestions();
+  playerSelect.value = "";
   renderPlayer(name);
 }
 

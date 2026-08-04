@@ -143,6 +143,49 @@ main {
   padding: 0 16px 60px;
 }
 
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  justify-content: center;
+  margin: 0 auto 18px;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 8em;
+}
+
+.filter-field-player {
+  min-width: 12em;
+  flex-grow: 1;
+}
+
+.filter-label {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  letter-spacing: 0.03em;
+}
+
+.filter-field select {
+  width: 100%;
+  padding: 9px 10px;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-alt);
+  color: var(--text);
+  outline: none;
+}
+
+.filter-field select:focus { border-color: var(--accent); }
+
 .search-box {
   position: relative;
   margin: 0 auto 20px;
@@ -234,6 +277,18 @@ main {
   margin: 24px 0 10px;
   padding-left: 10px;
   border-left: 4px solid var(--accent);
+}
+
+.roster {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.roster-player-name {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  font-weight: 700;
 }
 
 /* 成績カード一覧: どの画面幅でも横スクロールが出ないよう、
