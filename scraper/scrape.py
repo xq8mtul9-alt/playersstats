@@ -19,8 +19,8 @@ import requests
 from bs4 import BeautifulSoup
 
 BASE = "https://npb.jp/bis"
-START_YEAR = 2016
-YEARS = range(START_YEAR, datetime.now().year + 1)  # 2016年〜実行時点の年度まで
+START_YEAR = 2005
+YEARS = range(START_YEAR, datetime.now().year + 1)  # 2005年〜実行時点の年度まで
 
 TEAMS = {
     "g": "読売ジャイアンツ",
@@ -42,9 +42,10 @@ TEAMS = {
 LEVELS = {1: "1軍", 2: "2軍"}
 KINDS = {"b": "打撃", "p": "投手"}
 
-# チームのURLコードは年度によって変わることがある（例: オリックスは2016-2017年は "bs"、以降は "b"）
+# チームのURLコードは年度によって変わることがある
 TEAM_CODE_OVERRIDES = {
-    "b": {2016: "bs", 2017: "bs"},
+    "b": {y: "bs" for y in range(2005, 2018)},   # オリックス: 2005-2017年は "bs"、2018年以降は "b"
+    "db": {y: "yb" for y in range(2005, 2012)},  # 横浜(DeNA): 2005-2011年は "yb"、2012年以降は "db"
 }
 
 
