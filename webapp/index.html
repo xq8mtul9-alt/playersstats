@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NPB選手成績検索（1軍・2軍）</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>NPB選手成績検索</h1>
+  <p class="sub">1軍（公式戦）・2軍（ファーム）成績を年度別に表示します</p>
+</header>
+
+<main>
+  <div class="search-box">
+    <input type="text" id="search-input" placeholder="選手名を入力（例：小園海斗、床田寛樹）" autocomplete="off">
+    <div id="suggestions" class="suggestions"></div>
+  </div>
+
+  <div id="status" class="status"></div>
+
+  <section id="result" class="result"></section>
+</main>
+
+<footer>
+  <p>データ出典：<a href="https://npb.jp/bis/" target="_blank" rel="noopener">NPB.jp 日本野球機構 成績・記録</a>（個人利用目的でスクレイピングしたローカルデータです）</p>
+  <p class="updated-at" id="updated-at"><!--BUILD_TIMESTAMP--></p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

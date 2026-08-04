@@ -1,0 +1,250 @@
+:root {
+  --bg: #0f1720;
+  --panel: #172230;
+  --panel-alt: #1d2b3a;
+  --border: #2a3a4a;
+  --text: #e7edf3;
+  --text-dim: #9fb0c0;
+  --accent: #4fb0ff;
+  --accent-dim: #2b6ea3;
+  --row-1gun: #1b3a2c;
+  --row-2gun: #33261a;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f4f6f8;
+    --panel: #ffffff;
+    --panel-alt: #f0f3f6;
+    --border: #dde3e9;
+    --text: #1c2733;
+    --text-dim: #5b6b7a;
+    --accent: #1a73c7;
+    --accent-dim: #cfe4f7;
+    --row-1gun: #e6f4ea;
+    --row-2gun: #fbeee0;
+  }
+}
+
+:root[data-theme="light"] {
+  --bg: #f4f6f8;
+  --panel: #ffffff;
+  --panel-alt: #f0f3f6;
+  --border: #dde3e9;
+  --text: #1c2733;
+  --text-dim: #5b6b7a;
+  --accent: #1a73c7;
+  --accent-dim: #cfe4f7;
+  --row-1gun: #e6f4ea;
+  --row-2gun: #fbeee0;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0f1720;
+  --panel: #172230;
+  --panel-alt: #1d2b3a;
+  --border: #2a3a4a;
+  --text: #e7edf3;
+  --text-dim: #9fb0c0;
+  --accent: #4fb0ff;
+  --accent-dim: #2b6ea3;
+  --row-1gun: #1b3a2c;
+  --row-2gun: #33261a;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+header {
+  padding: 28px 20px 16px;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0 0 6px;
+  font-size: 1.6rem;
+}
+
+header .sub {
+  margin: 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 60px;
+}
+
+.search-box {
+  position: relative;
+  margin: 0 auto 20px;
+  max-width: 520px;
+}
+
+#search-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 1.05rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  outline: none;
+}
+
+#search-input:focus {
+  border-color: var(--accent);
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 10;
+  display: none;
+}
+
+.suggestions.open { display: block; }
+
+.suggestion-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+
+.suggestion-item:last-child { border-bottom: none; }
+
+.suggestion-item:hover,
+.suggestion-item.active {
+  background: var(--panel-alt);
+}
+
+.suggestion-item .team {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-left: 8px;
+}
+
+.status {
+  text-align: center;
+  color: var(--text-dim);
+  min-height: 1.4em;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.player-header {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.player-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.player-header .teams {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  margin: 24px 0 10px;
+  padding-left: 10px;
+  border-left: 4px solid var(--accent);
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: var(--panel-alt);
+  color: var(--text-dim);
+  font-weight: 600;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+thead th:nth-child(-n+3) { text-align: left; }
+
+tbody td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+tbody td:nth-child(-n+3) { text-align: left; }
+
+tbody tr:last-child td { border-bottom: none; }
+
+tr.level-1 { background: var(--row-1gun); }
+tr.level-2 { background: var(--row-2gun); }
+
+.level-badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+tr.level-1 .level-badge { background: #2e7d4f; color: #fff; }
+tr.level-2 .level-badge { background: #b5651d; color: #fff; }
+
+.empty-hint {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 40px 0;
+}
+
+footer {
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  padding: 20px;
+}
+
+footer a { color: var(--accent); }
+
+.updated-at {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}

@@ -1,0 +1,51 @@
+name: Update NPB stats
+
+on:
+  schedule:
+    # 毎日 14:00 UTC (=23:00 JST、その日の試合終了後を想定)
+    - cron: "0 14 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Refresh current season data
+        run: |
+          CUR_YEAR=$(python -c "from datetime import datetime; print(datetime.now().year)")
+          python scraper/scrape.py --years "$CUR_YEAR" --force
+
+      - name: Rebuild merged dataset (uses cache for past seasons)
+        run: python scraper/scrape.py
+
+      - name: Build players.json
+        run: python scraper/build_players.py
+
+      - name: Build site (index.html)
+        run: python scraper/build_site.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html data/ webapp/data/
+          if git diff --cached --quiet; then
+            echo "No changes"
+          else
+            git commit -m "Update NPB stats data"
+            git push
+          fi
