@@ -1,6 +1,7 @@
 let PLAYERS = null;
 let NAMES = [];
 let ALL_RECORDS = []; // {name, year, level, kind, team, stats} を選手横断でフラット化したもの
+let ROSTER = null; // { year, teams: { チーム名: { 選手名: "背番号" } } }。NPB公式に現在のロースターしか無いため対象は最新年度のみ
 
 const TEAM_ORDER = [
   "読売ジャイアンツ", "阪神タイガース", "広島東洋カープ", "中日ドラゴンズ",
@@ -73,10 +74,17 @@ async function init() {
     if (typeof window.__EMBEDDED_PLAYERS__ !== "undefined") {
       // オフライン単体HTML版: データがページに埋め込まれているのでfetch不要
       PLAYERS = window.__EMBEDDED_PLAYERS__;
+      ROSTER = window.__EMBEDDED_ROSTER__ || null;
     } else {
       const res = await fetch("data/players.json");
       if (!res.ok) throw new Error("HTTP " + res.status);
       PLAYERS = await res.json();
+      try {
+        const rosterRes = await fetch("data/roster_numbers.json");
+        if (rosterRes.ok) ROSTER = await rosterRes.json();
+      } catch (e) {
+        // 背番号データが無くても致命的ではないので読み込み失敗は無視する
+      }
     }
     NAMES = Object.keys(PLAYERS);
     for (const name of NAMES) {
@@ -158,17 +166,38 @@ function renderRoster() {
     return;
   }
 
-  records.sort((a, b) => a.name.localeCompare(b.name, "ja") || a.level - b.level);
+  // 背番号データは現在シーズンのみ存在する（NPB公式に過去年度のアーカイブが無いため）
+  const numbers = (ROSTER && ROSTER.year === year) ? (ROSTER.teams[team] || {}) : null;
+
+  if (numbers) {
+    records.sort((a, b) => {
+      const na = Number(numbers[a.name]);
+      const nb = Number(numbers[b.name]);
+      const aHas = Number.isFinite(na);
+      const bHas = Number.isFinite(nb);
+      if (aHas && bHas) return na - nb || a.level - b.level;
+      if (aHas !== bHas) return aHas ? -1 : 1;
+      return a.name.localeCompare(b.name, "ja") || a.level - b.level;
+    });
+  } else {
+    records.sort((a, b) => a.name.localeCompare(b.name, "ja") || a.level - b.level);
+  }
+
   const nameCount = new Set(records.map(r => r.name)).size;
 
   const kindLabel = kind === "p" ? "投手" : "野手";
   const note = kind === "b" ? `、打席${MIN_PLATE_APPEARANCES}以下は除く` : "";
+  const sortNote = numbers ? "（背番号順）" : "";
   const html = `
     <div class="player-header">
       <h2>${year}年 ${escapeHtml(team)}</h2>
-      <span class="teams">${kindLabel}成績（${nameCount}名${note}）</span>
+      <span class="teams">${kindLabel}成績（${nameCount}名${note}）${sortNote}</span>
     </div>
-    ${renderTable(records, { identityHeader: "選手", identityFn: r => r.name })}
+    ${renderTable(records, {
+      identityHeader: "選手",
+      identityFn: r => r.name,
+      extraColumn: numbers ? { header: "背番号", fn: r => numbers[r.name] ?? "" } : null,
+    })}
   `;
 
   resultEl.innerHTML = html;
@@ -295,13 +324,15 @@ function renderPlayer(name) {
 
 // records: 同じ統計項目（打撃 or 投手）のレコード配列。
 // identityHeader/identityFn: 表の一番左の列（選手一覧なら「選手」、個人成績なら「年度」）
-function renderTable(records, { identityHeader, identityFn }) {
+// extraColumn: 任意で識別列の直後に挟む追加列（背番号など）。{header, fn} の形。
+function renderTable(records, { identityHeader, identityFn, extraColumn }) {
   const statCols = Object.keys(records[0].stats);
 
   const head = `
     <tr>
       <th class="col-identity">${escapeHtml(identityHeader)}</th>
       <th class="col-level">区分</th>
+      ${extraColumn ? `<th class="col-number">${escapeHtml(extraColumn.header)}</th>` : ""}
       ${statCols.map(c => `<th>${escapeHtml(c)}</th>`).join("")}
     </tr>
   `;
@@ -311,10 +342,12 @@ function renderTable(records, { identityHeader, identityFn }) {
       ? `<span class="level-badge">1軍</span>`
       : `<span class="level-badge">2軍</span>`;
     const cells = statCols.map(c => `<td>${escapeHtml(r.stats[c] ?? "")}</td>`).join("");
+    const extraCell = extraColumn ? `<td class="col-number">${escapeHtml(extraColumn.fn(r))}</td>` : "";
     return `
       <tr class="level-${r.level}">
         <td class="col-identity">${escapeHtml(identityFn(r))}</td>
         <td class="col-level">${badge}</td>
+        ${extraCell}
         ${cells}
       </tr>
     `;

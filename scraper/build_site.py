@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 WEBAPP = ROOT / "webapp"
 PLAYERS_FILE = WEBAPP / "data" / "players.json"
+ROSTER_FILE = WEBAPP / "data" / "roster_numbers.json"
 OUT_FILE = ROOT / "index.html"
 
 
@@ -17,6 +18,7 @@ def main():
     style_css = (WEBAPP / "style.css").read_text(encoding="utf-8")
     app_js = (WEBAPP / "app.js").read_text(encoding="utf-8")
     players_json = PLAYERS_FILE.read_text(encoding="utf-8")
+    roster_json = ROSTER_FILE.read_text(encoding="utf-8") if ROSTER_FILE.exists() else "null"
 
     link_tag = '<link rel="stylesheet" href="style.css">'
     assert link_tag in index_html
@@ -24,7 +26,11 @@ def main():
 
     script_tag = '<script src="app.js"></script>'
     assert script_tag in html
-    embedded = f'<script>window.__EMBEDDED_PLAYERS__ = {players_json};</script>\n<script>\n{app_js}\n</script>'
+    embedded = (
+        f"<script>window.__EMBEDDED_PLAYERS__ = {players_json};\n"
+        f"window.__EMBEDDED_ROSTER__ = {roster_json};</script>\n"
+        f"<script>\n{app_js}\n</script>"
+    )
     html = html.replace(script_tag, embedded)
 
     jst = timezone(timedelta(hours=9))

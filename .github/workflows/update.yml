@@ -32,6 +32,9 @@ jobs:
       - name: Rebuild merged dataset (uses cache for past seasons)
         run: python scraper/scrape.py
 
+      - name: Refresh current roster numbers
+        run: python scraper/scrape_roster.py
+
       - name: Build players.json
         run: python scraper/build_players.py
 
