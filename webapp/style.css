@@ -279,89 +279,66 @@ main {
   border-left: 4px solid var(--accent);
 }
 
-.roster {
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-}
-
-.roster-player-name {
-  margin: 0 0 8px;
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-/* 成績カード一覧: どの画面幅でも横スクロールが出ないよう、
-   統計項目は固定列の表ではなくラベル付きチップとして折り返す */
-.stat-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.stat-row {
+/* 成績テーブル: 列数が多いため table-layout: fixed で幅を均等割りし、
+   セル内で折り返させることで、どの画面幅でも横スクロールが出ないようにする */
+.stat-table-wrap {
   border: 1px solid var(--border);
-  border-left: 4px solid var(--border);
   border-radius: 10px;
-  background: var(--panel);
-  padding: 10px 14px 12px;
-  overflow-wrap: anywhere;
+  overflow: hidden;
 }
 
-.stat-row.level-1 { border-left-color: #2e7d4f; }
-.stat-row.level-2 { border-left-color: #b5651d; }
-
-.stat-row-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
+.stat-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 0.62rem;
+  line-height: 1.25;
 }
 
-.stat-year {
-  font-size: 1rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+.stat-table th,
+.stat-table td {
+  border: 1px solid var(--border);
+  padding: 3px 2px;
+  text-align: center;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
-.stat-team {
+.stat-table thead th {
+  background: var(--panel-alt);
   color: var(--text-dim);
-  font-size: 0.85rem;
-}
-
-.level-badge {
-  display: inline-block;
-  padding: 1px 7px;
-  border-radius: 6px;
-  font-size: 0.78rem;
   font-weight: 600;
 }
 
-.stat-row.level-1 .level-badge { background: #2e7d4f; color: #fff; }
-.stat-row.level-2 .level-badge { background: #b5651d; color: #fff; }
-
-.stat-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-}
-
-.stat {
-  display: flex;
-  flex-direction: column;
-  min-width: 3.6em;
-}
-
-.stat-label {
-  color: var(--text-dim);
-  font-size: 0.68rem;
-}
-
-.stat-value {
-  font-size: 0.92rem;
+.stat-table tbody td {
   font-variant-numeric: tabular-nums;
 }
+
+.stat-table .col-identity {
+  width: 14%;
+  text-align: left;
+  font-weight: 700;
+  padding-left: 5px;
+}
+
+.stat-table .col-level {
+  width: 7%;
+}
+
+.stat-table tr.level-1 { background: rgba(46, 125, 79, 0.15); }
+.stat-table tr.level-2 { background: rgba(181, 101, 29, 0.15); }
+
+.level-badge {
+  display: inline-block;
+  padding: 1px 4px;
+  border-radius: 5px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+tr.level-1 .level-badge { background: #2e7d4f; color: #fff; }
+tr.level-2 .level-badge { background: #b5651d; color: #fff; }
 
 .empty-hint {
   text-align: center;

@@ -132,9 +132,18 @@ function currentFilter() {
   return { year: Number(yearSelect.value), team: teamSelect.value, kind: kindSelect.value };
 }
 
+// 打席が極端に少ない（5以下）選手はロースター一覧からは除外する
+// （出場機会のほぼない選手を除き、実際にプレーした選手だけを表示するため）
+const MIN_PLATE_APPEARANCES = 5;
+
 function rosterRecords() {
   const { year, team, kind } = currentFilter();
-  return ALL_RECORDS.filter(r => r.year === year && r.team === team && r.kind === kind);
+  return ALL_RECORDS.filter(r => {
+    if (r.year !== year || r.team !== team || r.kind !== kind) return false;
+    const pa = Number(r.stats["打席"]);
+    if (Number.isFinite(pa) && pa <= MIN_PLATE_APPEARANCES) return false;
+    return true;
+  });
 }
 
 function rosterNames() {
@@ -150,30 +159,18 @@ function renderRoster() {
     return;
   }
 
-  const byName = new Map();
-  for (const r of records) {
-    if (!byName.has(r.name)) byName.set(r.name, []);
-    byName.get(r.name).push(r);
-  }
-  const names = [...byName.keys()].sort((a, b) => a.localeCompare(b, "ja"));
+  records.sort((a, b) => a.name.localeCompare(b.name, "ja") || a.level - b.level);
+  const nameCount = new Set(records.map(r => r.name)).size;
 
   const kindLabel = kind === "p" ? "投手" : "野手";
-  let html = `
+  const note = kind === "b" ? `、打席${MIN_PLATE_APPEARANCES}以下は除く` : "";
+  const html = `
     <div class="player-header">
       <h2>${year}年 ${escapeHtml(team)}</h2>
-      <span class="teams">${kindLabel}成績（${names.length}名）</span>
+      <span class="teams">${kindLabel}成績（${nameCount}名${note}）</span>
     </div>
-    <div class="roster">
+    ${renderTable(records, { identityHeader: "選手", identityFn: r => r.name })}
   `;
-  for (const name of names) {
-    html += `
-      <div class="roster-player">
-        <h3 class="roster-player-name">${escapeHtml(name)}</h3>
-        ${renderTable(byName.get(name))}
-      </div>
-    `;
-  }
-  html += `</div>`;
 
   resultEl.innerHTML = html;
 }
@@ -284,11 +281,11 @@ function renderPlayer(name) {
 
   if (battingRecords.length) {
     html += `<div class="section-title">打撃成績</div>`;
-    html += renderTable(battingRecords);
+    html += renderTable(battingRecords, { identityHeader: "年度", identityFn: r => String(r.year) });
   }
   if (pitchingRecords.length) {
     html += `<div class="section-title">投手成績</div>`;
-    html += renderTable(pitchingRecords);
+    html += renderTable(pitchingRecords, { identityHeader: "年度", identityFn: r => String(r.year) });
   }
   if (!battingRecords.length && !pitchingRecords.length) {
     html += `<div class="empty-hint">成績データがありません</div>`;
@@ -297,30 +294,32 @@ function renderPlayer(name) {
   resultEl.innerHTML = html;
 }
 
-function renderTable(records) {
+// records: 同じ統計項目（打撃 or 投手）のレコード配列。
+// identityHeader/identityFn: 表の一番左の列（選手一覧なら「選手」、個人成績なら「年度」）
+function renderTable(records, { identityHeader, identityFn }) {
   const statCols = Object.keys(records[0].stats);
 
-  const rows = records.map(r => {
+  const head = `
+    <tr>
+      <th class="col-identity">${escapeHtml(identityHeader)}</th>
+      <th class="col-level">区分</th>
+      ${statCols.map(c => `<th>${escapeHtml(c)}</th>`).join("")}
+    </tr>
+  `;
+
+  const body = records.map(r => {
     const badge = r.level === 1
       ? `<span class="level-badge">1軍</span>`
       : `<span class="level-badge">2軍</span>`;
-    const stats = statCols.map(c => `
-      <div class="stat">
-        <span class="stat-label">${escapeHtml(c)}</span>
-        <span class="stat-value">${escapeHtml(r.stats[c] ?? "")}</span>
-      </div>
-    `).join("");
+    const cells = statCols.map(c => `<td>${escapeHtml(r.stats[c] ?? "")}</td>`).join("");
     return `
-      <div class="stat-row level-${r.level}">
-        <div class="stat-row-head">
-          <span class="stat-year">${r.year}</span>
-          ${badge}
-          <span class="stat-team">${escapeHtml(r.team)}</span>
-        </div>
-        <div class="stat-grid">${stats}</div>
-      </div>
+      <tr class="level-${r.level}">
+        <td class="col-identity">${escapeHtml(identityFn(r))}</td>
+        <td class="col-level">${badge}</td>
+        ${cells}
+      </tr>
     `;
   }).join("");
 
-  return `<div class="stat-rows">${rows}</div>`;
+  return `<div class="stat-table-wrap"><table class="stat-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
 }
