@@ -10,6 +10,9 @@ const TEAM_ORDER = [
 ];
 const DEFAULT_TEAM = "広島東洋カープ";
 const DEFAULT_KIND = "b";
+// 打席が極端に少ない（5以下）選手はロースター一覧からは除外する
+// （出場機会のほぼない選手を除き、実際にプレーした選手だけを表示するため）
+const MIN_PLATE_APPEARANCES = 5;
 
 const searchInput = document.getElementById("search-input");
 const suggestionsEl = document.getElementById("suggestions");
@@ -131,10 +134,6 @@ function refreshPlayerOptions() {
 function currentFilter() {
   return { year: Number(yearSelect.value), team: teamSelect.value, kind: kindSelect.value };
 }
-
-// 打席が極端に少ない（5以下）選手はロースター一覧からは除外する
-// （出場機会のほぼない選手を除き、実際にプレーした選手だけを表示するため）
-const MIN_PLATE_APPEARANCES = 5;
 
 function rosterRecords() {
   const { year, team, kind } = currentFilter();
