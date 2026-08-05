@@ -307,19 +307,107 @@ function renderPlayer(name) {
     </div>
   `;
 
+  const identityFn = r => (r.isTotal ? "通算" : String(r.year));
+
   if (battingRecords.length) {
     html += `<div class="section-title">打撃成績</div>`;
-    html += renderTable(battingRecords, { identityHeader: "年度", identityFn: r => String(r.year) });
+    html += renderTable(withLevelTotals(battingRecords, "b"), { identityHeader: "年度", identityFn });
   }
   if (pitchingRecords.length) {
     html += `<div class="section-title">投手成績</div>`;
-    html += renderTable(pitchingRecords, { identityHeader: "年度", identityFn: r => String(r.year) });
+    html += renderTable(withLevelTotals(pitchingRecords, "p"), { identityHeader: "年度", identityFn });
   }
   if (!battingRecords.length && !pitchingRecords.length) {
     html += `<div class="empty-hint">成績データがありません</div>`;
   }
 
   resultEl.innerHTML = html;
+}
+
+// 選手個人成績の最後に、1軍・2軍それぞれの合計（通算）行を追加する。
+// 打率などの「率」は単純合計ではなく、合計した内訳から算出し直す。
+function withLevelTotals(records, kind) {
+  const totals = [1, 2]
+    .map(level => buildTotalRow(records.filter(r => r.level === level), kind, level))
+    .filter(Boolean);
+  return [...records, ...totals];
+}
+
+function buildTotalRow(levelRecords, kind, level) {
+  if (!levelRecords.length) return null;
+  return {
+    isTotal: true,
+    level,
+    stats: computeTotalStats(levelRecords, kind),
+  };
+}
+
+// NPBの投球回表記（例: "150.1" = 150 + 1/3回）をアウト数（1/3回単位）に変換する
+function inningsToOuts(text) {
+  const [wholeStr, fracStr] = String(text ?? "0").split(".");
+  const whole = parseInt(wholeStr, 10) || 0;
+  const frac = fracStr ? parseInt(fracStr, 10) || 0 : 0; // NPB表記では .1=1アウト .2=2アウト
+  return whole * 3 + frac;
+}
+
+function outsToInnings(outs) {
+  const whole = Math.floor(outs / 3);
+  const frac = outs % 3;
+  return frac === 0 ? String(whole) : `${whole}.${frac}`;
+}
+
+// 3割合の項目（打率など）をNPB表記（1未満は先頭の0を省く）で整形する
+function formatRate3(numerator, denominator) {
+  if (!denominator) return ".000";
+  const v = numerator / denominator;
+  const s = v.toFixed(3);
+  return v < 1 ? s.replace(/^0/, "") : s;
+}
+
+function formatEra(earnedRuns, outs) {
+  if (!outs) return "0.00";
+  return ((earnedRuns * 27) / outs).toFixed(2);
+}
+
+function computeTotalStats(levelRecords, kind) {
+  const statCols = Object.keys(levelRecords[0].stats);
+  const rateCols = kind === "b" ? ["打率", "長打率", "出塁率"] : ["勝率", "防御率"];
+
+  const sums = {};
+  let outsTotal = 0;
+  for (const col of statCols) {
+    if (rateCols.includes(col) || (kind === "p" && col === "投球回")) continue;
+    sums[col] = 0;
+  }
+  for (const r of levelRecords) {
+    for (const col of statCols) {
+      if (rateCols.includes(col)) continue;
+      if (kind === "p" && col === "投球回") {
+        outsTotal += inningsToOuts(r.stats[col]);
+        continue;
+      }
+      const v = parseFloat(r.stats[col]);
+      sums[col] += Number.isFinite(v) ? v : 0;
+    }
+  }
+
+  const stats = {};
+  for (const col of statCols) stats[col] = col in sums ? String(sums[col]) : "";
+
+  if (kind === "b") {
+    stats["打率"] = formatRate3(sums["安打"], sums["打数"]);
+    stats["長打率"] = formatRate3(sums["塁打"], sums["打数"]);
+    stats["出塁率"] = formatRate3(
+      sums["安打"] + sums["四球"] + sums["死球"],
+      sums["打数"] + sums["四球"] + sums["死球"] + sums["犠飛"]
+    );
+  } else {
+    stats["投球回"] = outsToInnings(outsTotal);
+    stats["勝率"] = formatRate3(sums["勝利"], sums["勝利"] + sums["敗北"]);
+    stats["防御率"] = formatEra(sums["自責点"], outsTotal);
+  }
+
+  return stats;
 }
 
 // records: 同じ統計項目（打撃 or 投手）のレコード配列。
@@ -344,7 +432,7 @@ function renderTable(records, { identityHeader, identityFn, extraColumn }) {
     const cells = statCols.map(c => `<td>${escapeHtml(r.stats[c] ?? "")}</td>`).join("");
     const extraCell = extraColumn ? `<td class="col-number">${escapeHtml(extraColumn.fn(r))}</td>` : "";
     return `
-      <tr class="level-${r.level}">
+      <tr class="level-${r.level}${r.isTotal ? " total-row" : ""}">
         <td class="col-identity">${escapeHtml(identityFn(r))}</td>
         <td class="col-level">${badge}</td>
         ${extraCell}
