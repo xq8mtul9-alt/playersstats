@@ -10,12 +10,16 @@ NPB.jp の「選手一覧」ページ（https://npb.jp/bis/teams/rst_{team}.html
 """
 import json
 import re
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from scrape import normalize_name_chars  # 崎/﨑・高/髙 等の異体字をplayers.jsonと同じ表記に揃える
 
 BASE = "https://npb.jp/bis/teams"
 
@@ -45,7 +49,7 @@ session.headers.update(HEADERS)
 
 
 def normalize_name(raw: str) -> str:
-    return re.sub(r"[　\s]+", " ", raw).strip()
+    return normalize_name_chars(re.sub(r"[　\s]+", " ", raw).strip())
 
 
 def parse_roster(html: str) -> dict:

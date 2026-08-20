@@ -95,6 +95,31 @@ def fetch_html(url: str, cache_path: Path, force: bool = False, retries: int = 3
 
 NAME_MARK_RE = re.compile(r"^[*+]+")
 
+# NPB.jpは年度（≒サイトの世代）によって同じ選手名に異なる異体字を使っていることがあり、
+# 正規化しないと同一選手が別人として分裂してしまう（例: 中崎/中﨑 翔太）。
+# 右側（異体字）を左側（正字体）に統一する。
+NAME_CHAR_NORMALIZE = {
+    "﨑": "崎",
+    "髙": "高",
+    "邉": "辺",
+    "邊": "辺",
+    "德": "徳",
+    "廣": "広",
+    "濱": "浜",
+    "濵": "浜",
+    "榮": "栄",
+    "龍": "竜",
+    "賴": "頼",
+    "櫻": "桜",
+    "齋": "斎",
+    "齊": "斉",
+}
+NAME_CHAR_NORMALIZE_RE = re.compile("|".join(re.escape(c) for c in NAME_CHAR_NORMALIZE))
+
+
+def normalize_name_chars(text: str) -> str:
+    return NAME_CHAR_NORMALIZE_RE.sub(lambda m: NAME_CHAR_NORMALIZE[m.group(0)], text)
+
 
 def _norm_header(text: str) -> str:
     """見出しテキストの空白（全角スペース含む）を除去して比較用に正規化する。"""
@@ -191,6 +216,7 @@ def parse_table(html: str, year: int, level: int, kind: str, team_code: str, tea
         clean_name = NAME_MARK_RE.sub("", combined).strip()
         # 選手名内の全角スペースを1つの半角スペースに正規化(表記ゆれ対策)
         normalized_name = re.sub(r"[　\s]+", " ", clean_name).strip()
+        normalized_name = normalize_name_chars(normalized_name)
         if not normalized_name:
             continue
 
